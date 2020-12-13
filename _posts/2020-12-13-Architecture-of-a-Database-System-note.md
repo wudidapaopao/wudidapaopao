@@ -475,21 +475,23 @@ tags: ["note"]
 
      <br/>
 
-   -  `Transaction Isolation Level`
+   - `Transaction Isolation Level`
 
      1. `READ UNCOMMITTED`：事务会读到其他事务未提交的写入。
-2. `READ COMMITTED`：事务会读到其他事务提交的不同版本的写入。对应在`2PL`中，读完数据后立刻释放`read lock`。
+     2. `READ COMMITTED`：事务会读到其他事务提交的不同版本的写入。对应在`2PL`中，读完数据后立刻释放`read lock`。
      3. `REPEATABLE READ`：事务在相同`predicate`下，两次读取到的匹配`tuple`数量不一样(`phantom problem`)。
      4. `SERIALIZABLE`：保证串行化读写的效果。
-     
-     <br/>
 
      数据库厂商额外提供的事务隔离级别：
 
      1. `CURSOR STABILITY`：相比于`READ COMMITTED`，读完数据后不立刻释放`read lock`，而是读下一个数据时，才释放上一次的`read lock`，保证了`read– think–write` 操作不被其他事务的更新操作影响。
-2. `SNAPSHOT ISOLATION`：通过`MVCC`保证事务的读操作都在一个快照下。事务开始时获取`start-timestamp`，事务准备提交时，获取`end-timestamp`，验证是否有其他事务的`start/end-timestamp`和当前事务`overlap`且有`write conflict`。
+     2. `SNAPSHOT ISOLATION`：通过`MVCC`保证事务的读操作都在一个快照下。事务开始时获取`start-timestamp`，事务准备提交时，获取`end-timestamp`，验证是否有其他事务的`start/end-timestamp`和当前事务`overlap`且有`write conflict`。
      3. `READ CONSISTENCY`：`oracle`提供的一种`MVCC`实现。事务内每个`SQL`语句都能见到最新提交的写入，对于一条从`cursor`获取数据的SQL语句，可见的写入是打开`cursor`时已提交的。每个`tuple`的多版本实现是逻辑上的，不存储每个版本的数据，获取旧版本数据通过回放`undo`日志的方式实现。相比`SNAPSHOT ISOLATION`，`write conlict`时是先`write`的优先，而不是`SNAPSHOT ISOLATION`中的先`commit`的优先。
-   
+
+     
+
+     
+
    <br/>
 
 4. `Log Manager`
@@ -506,6 +508,8 @@ tags: ["note"]
      2. `Log record`需要按照顺序先后被`sync`。
      3. 事务的commit操作，需要先`sync commit log record`，然后才能返回事务`commit`成功。
 
+     <br/>
+
      上述的第1条保证事务可以被`undo`操作回滚，第2，3条保证事务可以被`redo`操作保证持久化。
 
      <br/>
@@ -515,6 +519,8 @@ tags: ["note"]
      1. `DIRECT`：数据被原地更新。
      2. `STEAL`：`buffer pool`中`unpinned`的`frame`可以被`steal`，并被写回`disk`，即便`frame`中包含未提交的数据。
      3. `NOT-FORCE`：已`commit`的数据所在`dirty frame page`不一定需要被`force sync`到`disk`。
+
+     <br/>
 
      使用`STEAL/NOT-FORCE`的好处是给予`buffer pool`和`disk io`极大的自由度来提高性能。坏处是需要`log manager`处理好各种情况，包括`undo` 被`steal`的`uncommited page`和`redo`没被`force`写`disk`的`commited page`。
 
@@ -546,7 +552,7 @@ tags: ["note"]
 
    <br/>
 
-5.  Locking and Logging in Indexes
+5. `Storage Locking and Logging in Indexes`
 
    - `Latching in B+-Tree`
 
@@ -578,13 +584,9 @@ tags: ["note"]
 
 6. `Interdependencies of Transactional Storage`
 
-    此节主要讲述了数据库中`concurrency control, recovery management, access method`三者非常耦合，使得事务执行过程中实现的复杂度很高。
+   此节主要讲述了数据库中`concurrency control, recovery management, access method`三者非常耦合，使得事务执行过程中实现的复杂度很高。比如对于`concurrency control`和`recovery management`，`non-strict two-phase locking`的并发控制实现，在事务`rollback`之前就可能释放了`lock`，导致`UNDO`操作难以进行。
 
-   比如对于`concurrency control`和`recovery management`，`non-strict two-phase locking`的并发控制实现，在事务`rollback`之前就可能释放了`lock`，导致`UNDO`操作难以进行。
-
-   还举了些其他耦合的例子，暂时无法理解，后续再看吧。
-
-   因为上述三者的复杂设计，buffer pool得到了充分的自由度，可以自由调度`io`(`NOT FORCED`)以及安排缓存策略(`STEAL`)。
+   还举了些其他耦合的例子，暂时无法理解，后续再看吧。因为上述三者的复杂设计，`buffer pool`得到了充分的自由度，可以自由调度`io`(`NOT FORCED`)以及安排缓存策略(`STEAL`)。
 
    <br/>
 
@@ -607,7 +609,7 @@ tags: ["note"]
 
 下面是一些几乎出现在所有数据库中的共享组件，但很少在教材或者论文中被提到。
 
-1.  `Catalog Manager`
+1. `Catalog Manager`
 
    目录管理器(`Catalog Manager`)，存放数据库的`metadata`，包括`user`，`schema`，`table`，`column`，`index`等。
 
@@ -658,7 +660,7 @@ tags: ["note"]
 
    <br/>
 
-5.  `Administration, Monitoring, and Utility`
+5. `Administration, Monitoring, and Utility`
 
    数据库的一些管理，监控等操作，不能影响在线事务请求。
 
