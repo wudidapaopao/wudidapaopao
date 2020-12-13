@@ -11,7 +11,7 @@ tags: ["note"]
 
 <img src="../images/数据库组件.png" alt="image-20201213224620512" style="zoom:50%;" />
 
-
+<br/>
 
 ## 一. 进程模型
 
@@ -400,7 +400,6 @@ tags: ["note"]
   2. 数据压缩，过去是对`disk`上的数据压缩，可以减小`disk io`的延迟，且尽可能缓存`disk`上的数据。随着`RAM`的访问速度相比`cpu`的计算速度越来越远，提出在请求执行的计算过程中才去解压缩，以让数据尽可能在`cpu cache`中。
   3. `Large-scale but sparse data storage`，`column-oriented storage`。
 
-  <br/>
 
 <br/>
 
@@ -478,21 +477,19 @@ tags: ["note"]
 
    -  `Transaction Isolation Level`
 
-     SQL标准中的事务隔离级别：
-
      1. `READ UNCOMMITTED`：事务会读到其他事务未提交的写入。
-     2. `READ COMMITTED`：事务会读到其他事务提交的不同版本的写入。对应在`2PL`中，读完数据后立刻释放`read lock`。
+2. `READ COMMITTED`：事务会读到其他事务提交的不同版本的写入。对应在`2PL`中，读完数据后立刻释放`read lock`。
      3. `REPEATABLE READ`：事务在相同`predicate`下，两次读取到的匹配`tuple`数量不一样(`phantom problem`)。
      4. `SERIALIZABLE`：保证串行化读写的效果。
-
+     
      <br/>
 
      数据库厂商额外提供的事务隔离级别：
 
      1. `CURSOR STABILITY`：相比于`READ COMMITTED`，读完数据后不立刻释放`read lock`，而是读下一个数据时，才释放上一次的`read lock`，保证了`read– think–write` 操作不被其他事务的更新操作影响。
-     2. `SNAPSHOT ISOLATION`：通过`MVCC`保证事务的读操作都在一个快照下。事务开始时获取`start-timestamp`，事务准备提交时，获取`end-timestamp`，验证是否有其他事务的`start/end-timestamp`和当前事务`overlap`且有`write conflict`。
+2. `SNAPSHOT ISOLATION`：通过`MVCC`保证事务的读操作都在一个快照下。事务开始时获取`start-timestamp`，事务准备提交时，获取`end-timestamp`，验证是否有其他事务的`start/end-timestamp`和当前事务`overlap`且有`write conflict`。
      3. `READ CONSISTENCY`：`oracle`提供的一种`MVCC`实现。事务内每个`SQL`语句都能见到最新提交的写入，对于一条从`cursor`获取数据的SQL语句，可见的写入是打开`cursor`时已提交的。每个`tuple`的多版本实现是逻辑上的，不存储每个版本的数据，获取旧版本数据通过回放`undo`日志的方式实现。相比`SNAPSHOT ISOLATION`，`write conlict`时是先`write`的优先，而不是`SNAPSHOT ISOLATION`中的先`commit`的优先。
-
+   
    <br/>
 
 4. `Log Manager`
